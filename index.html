@@ -73,61 +73,102 @@
     </form>
   </div>
 
-  <script>
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('user-input');
-    const chatBox = document.getElementById('chat-box');
+  
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const userMessage = input.value.trim();
-      if (!userMessage) return;
+<!-- Tambahkan di dalam <div id="chat-box"> sebagai container -->
+<!-- Tidak perlu diubah -->
 
-      // Tampilkan pesan user
-      const userBubble = document.createElement('div');
-      userBubble.className = 'text-right';
-      userBubble.innerHTML = `
-        <div class="inline-block bg-pink-500 text-white px-4 py-2 rounded-lg mb-1">
-          🧑‍💬 <strong>Kamu:</strong> ${userMessage}
-        </div>`;
-      chatBox.appendChild(userBubble);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      input.value = '';
+<script>
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('user-input');
+  const chatBox = document.getElementById('chat-box');
 
-      // Tampilkan efek mengetik
-      const typingDiv = document.createElement('div');
-      typingDiv.className = "text-left ai-msg";
-      typingDiv.innerHTML = `
-        <div class="inline-block bg-gray-700 text-white px-4 py-2 rounded-lg mb-1 flex items-center">
-          <strong>CuyAI:</strong> <span class="dot-flashing ml-2"></span>
-        </div>`;
-      chatBox.appendChild(typingDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
+  // Ambil histori dari localStorage
+  const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
 
-      // Kirim ke backend (Node.js API)
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_input: userMessage })
-        });
+  // Render histori awal
+  history.forEach(msg => {
+    chatBox.innerHTML += renderMessage(msg.sender, msg.text);
+  });
 
-        const aiText = await response.text();
+  chatBox.scrollTop = chatBox.scrollHeight;
 
-        // Ganti efek loading dengan jawaban
-        typingDiv.innerHTML = `
-          <div class="inline-block bg-gray-700 text-white px-4 py-2 rounded-lg mb-1">
-            🤖 <strong>CuyAI:</strong> ${aiText}
-          </div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userMessage = input.value.trim();
+    if (!userMessage) return;
 
-      } catch (error) {
-        typingDiv.innerHTML = `
-          <div class="inline-block bg-red-500 text-white px-4 py-2 rounded-lg mb-1">
-            ❌ <strong>Error:</strong> Gagal mendapatkan respon AI.
-          </div>`;
-      }
+    // Tampilkan pesan user dan simpan ke histori
+    chatBox.innerHTML += renderMessage('user', userMessage);
+    saveToHistory('user', userMessage);
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Tampilkan indikator mengetik
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.innerHTML = renderTyping();
+    chatBox.appendChild(typingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Fetch respons AI
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ user_input: userMessage })
     });
-  </script>
+
+    const aiText = await response.text();
+
+    // Hapus indikator dan tampilkan respon
+    typingDiv.remove();
+    chatBox.innerHTML += renderMessage('ai', aiText);
+    saveToHistory('ai', aiText);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+
+  function renderMessage(sender, text) {
+    if (sender === 'user') {
+      return `
+        <div class="text-right">
+          <div class="inline-flex items-start justify-end gap-2 mb-1">
+            <span class="bg-pink-500 text-white px-4 py-2 rounded-xl max-w-xs inline-block">
+              <strong>Kamu:</strong> ${text}
+            </span>
+            <img src="https://ui-avatars.com/api/?name=Kamu" class="w-8 h-8 rounded-full" alt="user" />
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="text-left">
+          <div class="inline-flex items-start gap-2 mb-1">
+            <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" class="w-8 h-8 rounded-full" alt="CuyAI" />
+            <span class="bg-gray-700 text-white px-4 py-2 rounded-xl max-w-xs inline-block">
+              <strong>CuyAI:</strong> ${text}
+            </span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function renderTyping() {
+    return `
+      <div class="inline-flex items-center gap-2">
+        <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" class="w-8 h-8 rounded-full" />
+        <span class="bg-gray-700 text-white px-4 py-2 rounded-xl flex items-center">
+          <strong>CuyAI:</strong> <span class="dot-flashing ml-2"></span>
+        </span>
+      </div>
+    `;
+  }
+
+  function saveToHistory(sender, text) {
+    history.push({ sender, text });
+    localStorage.setItem('chatHistory', JSON.stringify(history));
+  }
+</script>
+
 </body>
 </html>

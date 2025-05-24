@@ -6,13 +6,6 @@
   <title>CuyAI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    integrity="sha512-MocZjEJj1JXgXY4hFzEVDiVaAW1ToVdE6U2rjeIMkq1Ognm5qjDn1oqWS7jRO4CUAg4Oe8vb6HgUFDYBo/xuGQ=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
   <link rel="icon" type="image/png" href="https://i.ibb.co/5cXw9Hp/robot-avatar.png" />
   <style>
     body {
@@ -25,7 +18,6 @@
       background: #555;
       border-radius: 6px;
     }
-
     .chat-message.ai {
       background-color: rgba(255, 182, 193, 0.15);
       padding: 8px 12px;
@@ -39,7 +31,6 @@
       font-weight: 400;
       transition: background-color 0.3s ease;
     }
-
     .chat-message.user {
       background-color: #ec4899;
       padding: 10px 14px;
@@ -52,23 +43,19 @@
       font-size: 0.95rem;
       font-weight: 600;
     }
-
     .text-left > div.inline-flex {
       align-items: flex-start;
     }
-
     .text-right > div.inline-flex {
       justify-content: flex-end;
       align-items: flex-start;
     }
-
     @media (max-width: 640px) {
       .chat-message.ai,
       .chat-message.user {
         max-width: 90%;
       }
     }
-
     input:focus {
       outline: none;
       ring-color: #ec4899;
@@ -76,18 +63,12 @@
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex items-center justify-center px-4 py-6">
-
-  <!-- Logo sudut kiri atas -->
-  <div class="fixed top-4 left-4 z-50">
-    <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" alt="CuyAI Logo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg border-2 border-pink-500" />
-  </div>
-
   <div
     class="w-full max-w-2xl bg-gray-900 shadow-2xl rounded-2xl p-6 space-y-4 border border-gray-700 flex flex-col"
     style="height: 90vh; max-height: 700px;"
   >
     <h1 class="text-2xl font-semibold flex items-center gap-3 text-pink-500 shrink-0">
-      <i class="fas fa-brain text-3xl text-pink-500"></i>
+      <span class="text-3xl">🧠</span>
       <span>CuyAI - Chat Gemini</span>
     </h1>
 
@@ -111,7 +92,7 @@
         type="submit"
         class="bg-pink-600 hover:bg-pink-700 transition text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2"
       >
-        <i class="fas fa-paper-plane"></i> <span class="hidden sm:inline">Kirim</span>
+        📤 <span class="hidden sm:inline">Kirim</span>
       </button>
     </form>
 
@@ -135,7 +116,6 @@
     const chatBox = document.getElementById('chat-box');
     const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
 
-    // Render history on load
     history.forEach((msg) => {
       chatBox.innerHTML += renderMessage(msg.sender, msg.text);
     });

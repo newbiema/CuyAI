@@ -2,159 +2,192 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CuyAI</title>
-  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-MocZjEJj1JXgXY4hFzEVDiVaAW1ToVdE6U2rjeIMkq1Ognm5qjDn1oqWS7jRO4CUAg4Oe8vb6HgUFDYBo/xuGQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-MocZjEJj1JXgXY4hFzEVDiVaAW1ToVdE6U2rjeIMkq1Ognm5qjDn1oqWS7jRO4CUAg4Oe8vb6HgUFDYBo/xuGQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Marked.js untuk parsing markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle at top left, #1f2937, #111827);
     }
 
     ::-webkit-scrollbar {
       width: 6px;
     }
+
     ::-webkit-scrollbar-thumb {
-      background: #888;
+      background: #555;
       border-radius: 6px;
     }
-    .typing-text::after {
-      content: '...';
-      animation: dots 1.5s steps(3, end) infinite;
+
+    /* Styling chat bubble content for markdown */
+    .chat-message p {
+      margin: 0 0 0.5em 0;
+      line-height: 1.5;
     }
 
-    @keyframes dots {
-      0%, 20% {
-        content: '';
-      }
-      40% {
-        content: '.';
-      }
-      60% {
-        content: '..';
-      }
-      80%, 100% {
-        content: '...';
-      }
+    .chat-message strong {
+      font-weight: 600;
+    }
+
+    .chat-message em {
+      font-style: italic;
+    }
+
+    /* Preserve whitespace and line breaks */
+    .whitespace-pre-line {
+      white-space: pre-line;
     }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4 py-6 text-white">
-  <div class="w-full max-w-2xl bg-[#1e1e2f] shadow-2xl rounded-2xl p-6 space-y-5 border border-gray-700 backdrop-blur-md bg-opacity-80">
-    <h1 class="text-3xl font-bold flex items-center gap-3 text-pink-500 drop-shadow">
-      <i class="fas fa-robot animate-bounce"></i> CuyAI - Chat Gemini
+<body
+  class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex items-center justify-center px-4 py-6">
+  <div
+    class="w-full max-w-2xl bg-gray-900 shadow-2xl rounded-2xl p-6 space-y-4 border border-gray-700">
+    <h1 class="text-2xl font-semibold flex items-center gap-2 text-pink-500">
+      <i class="fas fa-robot"></i> CuyAI - Chat Gemini
     </h1>
 
-    <div id="chat-box" class="h-[60vh] overflow-y-auto bg-[#2a2a3d] rounded-xl p-4 space-y-3 border border-gray-700 scroll-smooth text-sm sm:text-base break-words">
-      <!-- Chat messages will be injected here -->
+    <div id="chat-box"
+      class="h-[60vh] overflow-y-auto bg-gray-800 rounded-xl p-4 space-y-3 border border-gray-700 scroll-smooth text-sm sm:text-base break-words">
+      <!-- Chat messages akan masuk sini -->
     </div>
 
     <form id="chat-form" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <input type="text" id="user-input" placeholder="Tulis pesan..." required autocomplete="off"
-             class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-200" />
+        class="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition" />
       <button type="submit"
-              class="bg-pink-600 hover:bg-pink-700 active:scale-95 transition text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 shadow-md"> Kirim
+        class="bg-pink-600 hover:bg-pink-700 transition text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2">
+        <i class="fas fa-paper-plane"></i> <span class="hidden sm:inline">Kirim</span>
       </button>
     </form>
 
-    <button onclick="clearChat()" class="text-sm text-gray-400 hover:text-pink-400 mt-2 transition">
+    <button onclick="clearChat()" class="text-sm text-gray-400 hover:text-pink-400 mt-1 sm:mt-2">
       🗑️ Hapus Riwayat Chat
     </button>
   </div>
 
-<script>
-  function clearChat() {
-    localStorage.removeItem('chatHistory');
-    chatBox.innerHTML = '';
-  }
+  <script>
+    function clearChat() {
+      localStorage.removeItem('chatHistory');
+      chatBox.innerHTML = '';
+    }
 
-  const form = document.getElementById('chat-form');
-  const input = document.getElementById('user-input');
-  const chatBox = document.getElementById('chat-box');
-  const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const chatBox = document.getElementById('chat-box');
+    const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
 
-  history.forEach(msg => {
-    chatBox.innerHTML += renderMessage(msg.sender, msg.text);
-  });
-
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userMessage = input.value.trim();
-    if (!userMessage) return;
-
-    chatBox.innerHTML += renderMessage('user', userMessage);
-    saveToHistory('user', userMessage);
-    input.value = '';
+    // Render history dari localStorage
+    history.forEach(msg => {
+      // Jika sender AI, parse markdown dulu
+      if (msg.sender === 'ai') {
+        const html = marked.parse(msg.text);
+        chatBox.innerHTML += renderMessage('ai', html);
+      } else {
+        chatBox.innerHTML += renderMessage('user', escapeHtml(msg.text));
+      }
+    });
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'typing-indicator';
-    typingDiv.innerHTML = renderTyping();
-    chatBox.appendChild(typingDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ user_input: userMessage })
+      chatBox.innerHTML += renderMessage('user', escapeHtml(userMessage));
+      saveToHistory('user', userMessage);
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Tampilkan indikator mengetik
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typing-indicator';
+      typingDiv.innerHTML = renderTyping();
+      chatBox.appendChild(typingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Fetch response dari backend
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_input: userMessage })
+      });
+
+      const aiText = await response.text();
+
+      typingDiv.remove();
+
+      // Parse markdown dari AI sebelum tampilkan
+      const aiHTML = marked.parse(aiText);
+
+      chatBox.innerHTML += renderMessage('ai', aiHTML);
+      saveToHistory('ai', aiText);
+      chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    const aiText = await response.text();
+    // Fungsi untuk escape HTML agar aman di input user (user message)
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-    typingDiv.remove();
-    chatBox.innerHTML += renderMessage('ai', aiText);
-    saveToHistory('ai', aiText);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
-
-  function renderMessage(sender, text) {
-    if (sender === 'user') {
-      return `
+    // Fungsi render pesan (text sudah html untuk AI, user di-escape)
+    function renderMessage(sender, htmlText) {
+      if (sender === 'user') {
+        return `
         <div class="text-right">
           <div class="inline-flex items-start justify-end gap-2 mb-1">
-            <span class="bg-pink-600 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block">
-              <strong>Kamu:</strong> ${text}
+            <span
+              class="bg-pink-500 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block whitespace-pre-line leading-relaxed chat-message">
+              <strong>Kamu:</strong> ${htmlText}
             </span>
             <img src="https://ui-avatars.com/api/?name=Kamu" class="w-8 h-8 rounded-full" alt="user" />
           </div>
         </div>
       `;
-    } else {
-      return `
+      } else {
+        return `
         <div class="text-left">
           <div class="inline-flex items-start gap-2 mb-1">
             <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" class="w-8 h-8 rounded-full" alt="CuyAI" />
-            <span class="bg-gray-700 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block">
-              <strong>CuyAI:</strong> ${text}
+            <span
+              class="bg-gray-700 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block whitespace-pre-line leading-relaxed chat-message">
+              <strong>CuyAI:</strong> ${htmlText}
             </span>
           </div>
         </div>
       `;
+      }
     }
-  }
 
-  function renderTyping() {
-    return `
-      <div class="inline-flex items-center gap-2 mb-1" id="typing-line">
+    function renderTyping() {
+      return `
+      <div class="inline-flex items-center gap-2">
         <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" class="w-8 h-8 rounded-full" />
-        <span class="bg-gray-700 text-white px-4 py-2 rounded-xl flex items-center typing-text">
+        <span class="bg-gray-700 text-white px-4 py-2 rounded-xl flex items-center">
           <strong class="mr-2">CuyAI:</strong>
+          <span class="typing-text">sedang mengetik...</span>
         </span>
       </div>
     `;
-  }
+    }
 
-  function saveToHistory(sender, text) {
-    history.push({ sender, text });
-    localStorage.setItem('chatHistory', JSON.stringify(history));
-  }
-</script>
-
+    function saveToHistory(sender, text) {
+      history.push({ sender, text });
+      localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+  </script>
 </body>
 </html>

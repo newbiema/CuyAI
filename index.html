@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CuyAI - Chatbot Gemini</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+    }
+    .dot-flashing {
+      position: relative;
+      width: 0.75em;
+      height: 0.75em;
+      margin-left: 4px;
+      border-radius: 50%;
+      background-color: #f472b6;
+      animation: dotFlashing 1s infinite linear alternate;
+    }
+    @keyframes dotFlashing {
+      0% { background-color: #f472b6; }
+      50%, 100% { background-color: #f9a8d4; }
+    }
+    .dot-flashing::before, .dot-flashing::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      width: 0.75em;
+      height: 0.75em;
+      border-radius: 50%;
+      background-color: inherit;
+    }
+    .dot-flashing::before {
+      left: -1.2em;
+      animation-delay: 0.2s;
+      animation: dotFlashing 1s infinite linear alternate;
+    }
+    .dot-flashing::after {
+      left: 1.2em;
+      animation-delay: 0.4s;
+      animation: dotFlashing 1s infinite linear alternate;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-2xl bg-gray-900 shadow-xl rounded-2xl p-6 space-y-4 border border-gray-700">
+    <h1 class="text-2xl font-semibold flex items-center gap-2">
+      <i class="fas fa-robot text-pink-500"></i> CuyAI - Chat Gemini
+    </h1>
+
+    <div id="chat-box" class="h-[450px] overflow-y-auto bg-gray-800 rounded-xl p-4 space-y-3 border border-gray-700 scroll-smooth">
+      <!-- Chat will be inserted here -->
+    </div>
+
+    <form id="chat-form" class="flex items-center gap-2">
+      <input type="text" id="user-input" placeholder="Tulis pesan..." required autocomplete="off"
+             class="flex-1 px-4 py-2 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition" />
+      <button type="submit"
+              class="bg-pink-600 hover:bg-pink-700 transition text-white px-4 py-2 rounded-lg flex items-center gap-2">
+        <i class="fas fa-paper-plane"></i> Kirim
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const chatBox = document.getElementById('chat-box');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
+
+      // Tampilkan pesan user
+      const userBubble = document.createElement('div');
+      userBubble.className = 'text-right';
+      userBubble.innerHTML = `
+        <div class="inline-block bg-pink-500 text-white px-4 py-2 rounded-lg mb-1">
+          🧑‍💬 <strong>Kamu:</strong> ${userMessage}
+        </div>`;
+      chatBox.appendChild(userBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      input.value = '';
+
+      // Tampilkan efek mengetik
+      const typingDiv = document.createElement('div');
+      typingDiv.className = "text-left ai-msg";
+      typingDiv.innerHTML = `
+        <div class="inline-block bg-gray-700 text-white px-4 py-2 rounded-lg mb-1 flex items-center">
+          <strong>CuyAI:</strong> <span class="dot-flashing ml-2"></span>
+        </div>`;
+      chatBox.appendChild(typingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Kirim ke backend (Node.js API)
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_input: userMessage })
+        });
+
+        const aiText = await response.text();
+
+        // Ganti efek loading dengan jawaban
+        typingDiv.innerHTML = `
+          <div class="inline-block bg-gray-700 text-white px-4 py-2 rounded-lg mb-1">
+            🤖 <strong>CuyAI:</strong> ${aiText}
+          </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+      } catch (error) {
+        typingDiv.innerHTML = `
+          <div class="inline-block bg-red-500 text-white px-4 py-2 rounded-lg mb-1">
+            ❌ <strong>Error:</strong> Gagal mendapatkan respon AI.
+          </div>`;
+      }
+    });
+  </script>
+</body>
+</html>

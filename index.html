@@ -12,36 +12,57 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top left, #1f2937, #111827);
     }
+
     ::-webkit-scrollbar {
       width: 6px;
     }
     ::-webkit-scrollbar-thumb {
-      background: #555;
+      background: #888;
       border-radius: 6px;
+    }
+    .typing-text::after {
+      content: '...';
+      animation: dots 1.5s steps(3, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% {
+        content: '';
+      }
+      40% {
+        content: '.';
+      }
+      60% {
+        content: '..';
+      }
+      80%, 100% {
+        content: '...';
+      }
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex items-center justify-center px-4 py-6">
-  <div class="w-full max-w-2xl bg-gray-900 shadow-2xl rounded-2xl p-6 space-y-4 border border-gray-700">
-    <h1 class="text-2xl font-semibold flex items-center gap-2 text-pink-500">
-      <i class="fas fa-robot"></i> CuyAI - Chat Gemini
+<body class="min-h-screen flex items-center justify-center px-4 py-6 text-white">
+  <div class="w-full max-w-2xl bg-[#1e1e2f] shadow-2xl rounded-2xl p-6 space-y-5 border border-gray-700 backdrop-blur-md bg-opacity-80">
+    <h1 class="text-3xl font-bold flex items-center gap-3 text-pink-500 drop-shadow">
+      <i class="fas fa-robot animate-bounce"></i> CuyAI - Chat Gemini
     </h1>
 
-    <div id="chat-box" class="h-[60vh] overflow-y-auto bg-gray-800 rounded-xl p-4 space-y-3 border border-gray-700 scroll-smooth text-sm sm:text-base break-words">
+    <div id="chat-box" class="h-[60vh] overflow-y-auto bg-[#2a2a3d] rounded-xl p-4 space-y-3 border border-gray-700 scroll-smooth text-sm sm:text-base break-words">
       <!-- Chat messages will be injected here -->
     </div>
 
     <form id="chat-form" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
       <input type="text" id="user-input" placeholder="Tulis pesan..." required autocomplete="off"
-             class="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition" />
+             class="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-200" />
       <button type="submit"
-              class="bg-pink-600 hover:bg-pink-700 transition text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2">
+              class="bg-pink-600 hover:bg-pink-700 active:scale-95 transition text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 shadow-md">
         <i class="fas fa-paper-plane"></i> <span class="hidden sm:inline">Kirim</span>
       </button>
     </form>
 
-    <button onclick="clearChat()" class="text-sm text-gray-400 hover:text-pink-400 mt-1 sm:mt-2">
+    <button onclick="clearChat()" class="text-sm text-gray-400 hover:text-pink-400 mt-2 transition">
       🗑️ Hapus Riwayat Chat
     </button>
   </div>
@@ -98,7 +119,7 @@
       return `
         <div class="text-right">
           <div class="inline-flex items-start justify-end gap-2 mb-1">
-            <span class="bg-pink-500 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block">
+            <span class="bg-pink-600 text-white px-4 py-2 rounded-xl max-w-[80%] inline-block">
               <strong>Kamu:</strong> ${text}
             </span>
             <img src="https://ui-avatars.com/api/?name=Kamu" class="w-8 h-8 rounded-full" alt="user" />
@@ -121,11 +142,10 @@
 
   function renderTyping() {
     return `
-      <div class="inline-flex items-center gap-2">
+      <div class="inline-flex items-center gap-2 mb-1" id="typing-line">
         <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" class="w-8 h-8 rounded-full" />
-        <span class="bg-gray-700 text-white px-4 py-2 rounded-xl flex items-center">
+        <span class="bg-gray-700 text-white px-4 py-2 rounded-xl flex items-center typing-text">
           <strong class="mr-2">CuyAI:</strong>
-          <span class="typing-text">sedang mengetik...</span>
         </span>
       </div>
     `;

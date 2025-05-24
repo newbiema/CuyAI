@@ -13,6 +13,7 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
+  <link rel="icon" type="image/png" href="https://i.ibb.co/5cXw9Hp/robot-avatar.png" />
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -25,23 +26,22 @@
       border-radius: 6px;
     }
 
-    /* Style chat messages */
     .chat-message.ai {
-      background-color: rgba(255, 182, 193, 0.15); /* pink translucent */
+      background-color: rgba(255, 182, 193, 0.15);
       padding: 8px 12px;
       border-radius: 16px;
       max-width: 75%;
       line-height: 1.5;
-      color: #ffe4e6; /* pinkish-white */
+      color: #ffe4e6;
       word-wrap: break-word;
-      white-space: pre-line; /* preserve line breaks */
+      white-space: pre-line;
       font-size: 0.95rem;
       font-weight: 400;
       transition: background-color 0.3s ease;
     }
 
     .chat-message.user {
-      background-color: #ec4899; /* pink-500 */
+      background-color: #ec4899;
       padding: 10px 14px;
       border-radius: 16px;
       max-width: 75%;
@@ -53,7 +53,6 @@
       font-weight: 600;
     }
 
-    /* Container flex alignment */
     .text-left > div.inline-flex {
       align-items: flex-start;
     }
@@ -63,7 +62,6 @@
       align-items: flex-start;
     }
 
-    /* Responsive max-width for mobile */
     @media (max-width: 640px) {
       .chat-message.ai,
       .chat-message.user {
@@ -71,7 +69,6 @@
       }
     }
 
-    /* Input focus ring override to pink */
     input:focus {
       outline: none;
       ring-color: #ec4899;
@@ -79,12 +76,19 @@
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen flex items-center justify-center px-4 py-6">
+
+  <!-- Logo sudut kiri atas -->
+  <div class="fixed top-4 left-4 z-50">
+    <img src="https://i.ibb.co/5cXw9Hp/robot-avatar.png" alt="CuyAI Logo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg border-2 border-pink-500" />
+  </div>
+
   <div
     class="w-full max-w-2xl bg-gray-900 shadow-2xl rounded-2xl p-6 space-y-4 border border-gray-700 flex flex-col"
     style="height: 90vh; max-height: 700px;"
   >
-    <h1 class="text-2xl font-semibold flex items-center gap-2 text-pink-500 shrink-0">
-      <i class="fas fa-robot"></i> CuyAI - Chat Gemini
+    <h1 class="text-2xl font-semibold flex items-center gap-3 text-pink-500 shrink-0">
+      <i class="fas fa-brain text-3xl text-pink-500"></i>
+      <span>CuyAI - Chat Gemini</span>
     </h1>
 
     <div
@@ -147,7 +151,6 @@
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Typing indicator
       const typingDiv = document.createElement('div');
       typingDiv.id = 'typing-indicator';
       typingDiv.innerHTML = renderTyping();
@@ -217,7 +220,6 @@
       localStorage.setItem('chatHistory', JSON.stringify(history));
     }
 
-    // Simple escape to prevent HTML injection (basic)
     function escapeHtml(text) {
       return text
         .replace(/&/g, '&amp;')

@@ -1,0 +1,55 @@
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+    }
+
+
+    .typing-text {
+    font-style: italic;
+    animation: blinkText 1s steps(1, end) infinite;
+    }
+
+    @keyframes blinkText {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+    }
+
+    .dot-flashing {
+      position: relative;
+      width: 0.75em;
+      height: 0.75em;
+      margin-left: 4px;
+      border-radius: 50%;
+      background-color: #f472b6;
+      animation: dotFlashing 1s infinite linear alternate;
+    }
+    @keyframes dotFlashing {
+      0% { background-color: #f472b6; }
+      50%, 100% { background-color: #f9a8d4; }
+    }
+    .dot-flashing::before, .dot-flashing::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      width: 0.75em;
+      height: 0.75em;
+      border-radius: 50%;
+      background-color: inherit;
+    }
+    .dot-flashing::before {
+      left: -1.2em;
+      animation-delay: 0.2s;
+      animation: dotFlashing 1s infinite linear alternate;
+    }
+    .dot-flashing::after {
+      left: 1.2em;
+      animation-delay: 0.4s;
+      animation: dotFlashing 1s infinite linear alternate;
+    }

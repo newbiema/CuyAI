@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CuyAI - Chat Gemini</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SweetAlert CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d'
+            },
+            dark: {
+              800: '#1f2937',
+              900: '#111827'
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 3s ease-in-out infinite'
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-5px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      scroll-behavior: smooth;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, #ec4899, #8b5cf6);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(to bottom, #db2777, #7c3aed);
+    }
+    .message-animation {
+      animation: fadeIn 0.4s ease-out;
+    }
+    .typing-dots span {
+      animation: bounce 1.5s infinite;
+      display: inline-block;
+      opacity: 0.6;
+    }
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); opacity: 0.6; }
+      50% { transform: translateY(-5px); opacity: 1; }
+    }
+    .chat-bubble {
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .chat-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .glow {
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #1f2937, #111827);
+    }
+    .ai-message {
+      background: #1f2937;
+      border-left: 4px solid #ec4899;
+    }
+    .user-message {
+      background: linear-gradient(to right, #3b82f6, #6366f1);
+      border-right: 4px solid #3b82f6;
+    }
+    .suggestion-card {
+      transition: all 0.3s ease;
+    }
+    .suggestion-card:hover {
+      transform: translateY(-3px);
+      background: rgba(236, 72, 153, 0.1);
+    }
+    .status-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      z-index: 20;
+    }
+    .markdown-content strong {
+      font-weight: 600;
+      color: #f9a8d4;
+    }
+    .markdown-content em {
+      font-style: italic;
+    }
+    .markdown-content ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .markdown-content ol {
+      list-style-type: decimal;
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .markdown-content li {
+      margin-bottom: 0.25rem;
+    }
+    .markdown-content code {
+      background-color: rgba(156, 163, 175, 0.2);
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body class="gradient-bg text-white min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl bg-gray-900 shadow-2xl rounded-2xl p-6 space-y-6 border border-gray-700 relative overflow-hidden">
+    <!-- Status badge -->
+    <div id="api-status" class="status-badge bg-green-500 text-white flex items-center gap-1">
+      <i class="fas fa-circle"></i> <span>API: Connected</span>
+    </div>
+    
+    <!-- Decorative elements -->
+    <div class="absolute -top-20 -right-20 w-40 h-40 bg-pink-500 rounded-full blur-3xl opacity-20"></div>
+    <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+    
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center animate-float">
+            <i class="fas fa-robot text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-pink-300 bg-clip-text text-transparent">CuyAI</h1>
+            <p class="text-xs text-gray-400">Powered by Gemini API</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="theme-toggle" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all">
+            <i class="fas fa-sun text-yellow-400"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="chat-box" class="h-[500px] overflow-y-auto bg-gray-800/50 rounded-xl p-4 space-y-4 border border-gray-700 scroll-smooth backdrop-blur-sm">
+        <div class="text-center py-8">
+          <div class="inline-block bg-gray-700/50 px-6 py-4 rounded-xl max-w-md">
+            <div class="flex items-center justify-center gap-3 mb-2">
+              <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <i class="fas fa-robot"></i>
+              </div>
+              <h3 class="font-semibold text-lg">CuyAI Assistant</h3>
+            </div>
+            <p class="text-sm text-gray-300">Hai! Saya adalah asisten AI Anda. Silakan ajukan pertanyaan apa saja dan saya akan membantu Anda.</p>
+            <div id="welcome-suggestions" class="mt-4 flex flex-wrap justify-center gap-2">
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Pembelajaran</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Pemrograman</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Bisnis</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Kreatif</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 flex items-center gap-3">
+        <form id="chat-form" class="flex-1 flex items-center gap-2">
+          <div class="relative flex-1">
+            <input type="text" id="user-input" placeholder="Tulis pesan..." required autocomplete="off"
+                  class="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition pr-12 glow" />
+            <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary-500">
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+          <button type="submit"
+                  class="bg-gradient-to-r from-primary-500 to-primary-700 hover:from-primary-600 hover:to-primary-800 transition text-white px-6 py-3 rounded-lg flex items-center gap-2 font-medium group">
+            <span>Kirim</span>
+            <i class="fas fa-paper-plane group-hover:translate-x-1 transition-transform"></i>
+          </button>
+        </form>
+      </div>
+      
+      <div class="flex justify-between items-center mt-3">
+        <div class="flex gap-3">
+          <button id="suggest-btn" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg flex items-center gap-1 transition">
+            <i class="fas fa-lightbulb text-yellow-400"></i> Saran Pertanyaan
+          </button>
+        </div>
+        <button onclick="clearChat()" class="text-sm text-gray-400 hover:text-primary-400 flex items-center gap-1 transition">
+          <i class="fas fa-trash-alt"></i> Hapus Chat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    const chatState = {
+      isDarkMode: true,
+      apiEndpoint: '/api/chat',
+      apiStatus: 'checking'
+    };
+
+    // DOM Elements
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const chatBox = document.getElementById('chat-box');
+    const themeToggle = document.getElementById('theme-toggle');
+    const suggestBtn = document.getElementById('suggest-btn');
+    const apiStatus = document.getElementById('api-status');
+
+    // Check API status on load
+    checkAPIStatus();
+
+    // Ambil histori dari localStorage
+    const history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+
+    // Render histori awal
+    if (history.length > 0) {
+      history.forEach(msg => {
+        chatBox.innerHTML += renderMessage(msg.sender, msg.text);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    } else {
+      // Tampilkan pesan selamat datang
+      chatBox.innerHTML = `
+        <div class="text-center py-8">
+          <div class="inline-block bg-gray-700/50 px-6 py-4 rounded-xl max-w-md">
+            <div class="flex items-center justify-center gap-3 mb-2">
+              <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                <i class="fas fa-robot"></i>
+              </div>
+              <h3 class="font-semibold text-lg">CuyAI Assistant</h3>
+            </div>
+            <p class="text-sm text-gray-300">Hai! Saya adalah asisten AI Anda. Silakan ajukan pertanyaan apa saja dan saya akan membantu Anda.</p>
+            <div id="welcome-suggestions" class="mt-4 flex flex-wrap justify-center gap-2">
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Pembelajaran</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Pemrograman</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Bisnis</span>
+              <span class="text-xs bg-gray-600 px-3 py-1 rounded-full">Kreatif</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Event Listeners
+    form.addEventListener('submit', handleSubmit);
+    themeToggle.addEventListener('click', toggleTheme);
+    suggestBtn.addEventListener('click', showSuggestions);
+
+    // Fungsi untuk mengecek status API
+    async function checkAPIStatus() {
+      try {
+        const response = await fetch('/api/health');
+        if (response.ok) {
+          updateApiStatus('connected', 'API: Connected');
+        } else {
+          updateApiStatus('error', 'API: Error');
+        }
+      } catch (error) {
+        updateApiStatus('error', 'API: Offline');
+      }
+    }
+
+    function updateApiStatus(status, text) {
+      apiStatus.className = `status-badge flex items-center gap-1 ${
+        status === 'connected' ? 'bg-green-500' : 
+        status === 'error' ? 'bg-yellow-500' : 'bg-red-500'
+      } text-white`;
+      apiStatus.innerHTML = `<i class="fas fa-circle"></i> <span>${text}</span>`;
+      chatState.apiStatus = status;
+    }
+
+    // Clear chat function dengan SweetAlert
+    function clearChat() {
+      Swal.fire({
+        title: 'Hapus Riwayat Chat?',
+        text: "Anda tidak bisa mengembalikan data ini!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ec4899',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        background: '#1f2937',
+        color: '#fff'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem('chatHistory');
+          chatBox.innerHTML = `
+            <div class="text-center py-8">
+              <div class="inline-block bg-gray-700/50 px-6 py-4 rounded-xl max-w-md">
+                <div class="flex items-center justify-center gap-3 mb-2">
+                  <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center">
+                    <i class="fas fa-robot"></i>
+                  </div>
+                  <h3 class="font-semibold text-lg">CuyAI Assistant</h3>
+                </div>
+                <p class="text-sm text-gray-300">Riwayat chat telah dihapus. Silakan mulai percakapan baru!</p>
+              </div>
+            </div>
+          `;
+          // Tampilkan SweetAlert sukses
+          Swal.fire({
+            title: 'Dihapus!',
+            text: 'Riwayat chat Anda telah dihapus.',
+            icon: 'success',
+            confirmButtonColor: '#ec4899',
+            background: '#1f2937',
+            color: '#fff'
+          });
+        }
+      });
+    }
+    
+    // Submit handler
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
+
+      // Tampilkan pesan user dan simpan ke histori
+      chatBox.innerHTML += renderMessage('user', userMessage);
+      saveToHistory('user', userMessage);
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Tampilkan indikator mengetik
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typing-indicator';
+      typingDiv.innerHTML = renderTyping();
+      chatBox.appendChild(typingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        // Fetch respons dari backend Express.js
+        const response = await fetch(chatState.apiEndpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ user_input: userMessage })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
+        }
+
+        const aiText = await response.text();
+        
+        // Hapus indikator dan tampilkan respon
+        typingDiv.remove();
+        chatBox.innerHTML += renderMessage('ai', aiText);
+        saveToHistory('ai', aiText);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (error) {
+        console.error('Error fetching AI response:', error);
+        typingDiv.remove();
+        const errorMessage = chatState.apiStatus === 'connected' ? 
+          'Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi.' : 
+          'Koneksi API terputus. Harap periksa koneksi server dan API key.';
+        
+        chatBox.innerHTML += renderMessage('ai', errorMessage);
+        saveToHistory('ai', errorMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Tampilkan SweetAlert error
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: errorMessage,
+          confirmButtonColor: '#ec4899',
+          background: '#1f2937',
+          color: '#fff'
+        });
+      }
+    }
+
+    // Render message function dengan dukungan markdown sederhana
+    function renderMessage(sender, text) {
+      // Fungsi untuk mengubah markdown sederhana ke HTML
+      function formatMarkdown(text) {
+        // Bold: **teks**
+        let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Italic: *teks*
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Line breaks
+        formatted = formatted.replace(/\n/g, '<br>');
+        // Lists
+        formatted = formatted.replace(/^\s*-\s*(.*)$/gm, '<li>$1</li>');
+        formatted = formatted.replace(/<li>.*<\/li>/g, '<ul>$&</ul>');
+        // Code blocks
+        formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
+        return formatted;
+      }
+
+      const formattedText = formatMarkdown(text);
+
+      if (sender === 'user') {
+        return `
+          <div class="text-right message-animation">
+            <div class="inline-flex items-start justify-end gap-3 mb-3">
+              <div class="chat-bubble user-message text-white px-4 py-3 rounded-2xl rounded-br-none max-w-[80%] inline-block">
+                <div class="font-medium">${text}</div>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-user"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="text-left message-animation">
+            <div class="inline-flex items-start gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot"></i>
+              </div>
+              <div class="chat-bubble ai-message text-white px-4 py-3 rounded-2xl rounded-bl-none max-w-[80%] inline-block">
+                <div class="markdown-content font-medium">${formattedText}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Typing indicator
+    function renderTyping() {
+      return `
+        <div class="text-left">
+          <div class="inline-flex items-start gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div class="bg-gray-700 text-white px-4 py-3 rounded-2xl rounded-bl-none inline-block">
+              <div class="flex items-center">
+                <div class="typing-dots flex gap-1">
+                  <span>●</span>
+                  <span>●</span>
+                  <span>●</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Save to history
+    function saveToHistory(sender, text) {
+      history.push({ sender, text });
+      localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+
+    // Toggle theme
+    function toggleTheme() {
+      chatState.isDarkMode = !chatState.isDarkMode;
+      if (chatState.isDarkMode) {
+        document.body.className = "gradient-bg text-white min-h-screen flex items-center justify-center p-4";
+        themeToggle.innerHTML = '<i class="fas fa-sun text-yellow-400"></i>';
+      } else {
+        document.body.className = "bg-gradient-to-br from-gray-100 to-gray-300 text-gray-800 min-h-screen flex items-center justify-center p-4";
+        themeToggle.innerHTML = '<i class="fas fa-moon text-indigo-700"></i>';
+      }
+    }
+
+    // Show suggestions
+    function showSuggestions() {
+      const suggestions = [
+        "Apa itu kecerdasan buatan?",
+        "Bagaimana cara membuat website modern?",
+        "Jelaskan konsep machine learning dengan sederhana",
+        "Beri saya ide untuk proyek pemrograman",
+        "Apa perbedaan antara React dan Vue?",
+        "Bagaimana cara mengoptimalkan kinerja website?",
+        "Apa keuntungan menggunakan API dalam pengembangan aplikasi?",
+        "Jelaskan konsep dasar pemrograman berorientasi objek"
+      ];
+      
+      let suggestionHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">';
+      suggestions.forEach((suggestion) => {
+        suggestionHTML += `
+          <div class="suggestion-card bg-gray-700/50 p-3 rounded-lg cursor-pointer transition" onclick="document.getElementById('user-input').value = '${suggestion}'; document.getElementById('user-input').focus()">
+            <div class="text-sm flex items-center gap-2">
+              <i class="fas fa-comment-alt text-primary-500"></i>
+              ${suggestion}
+            </div>
+          </div>
+        `;
+      });
+      suggestionHTML += '</div>';
+      
+      // Tambahkan ke chat
+      chatBox.innerHTML += `
+        <div class="text-left message-animation">
+          <div class="inline-flex items-start gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="chat-bubble bg-gray-700 text-white px-4 py-3 rounded-2xl rounded-bl-none max-w-[80%] inline-block">
+              <div class="font-medium mb-2">Berikut beberapa pertanyaan yang bisa Anda coba:</div>
+              ${suggestionHTML}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>

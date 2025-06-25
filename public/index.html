@@ -232,12 +232,14 @@
   </div>
 
   <script>
-    // State management
-    const chatState = {
-      isDarkMode: true,
-      apiEndpoint: '/api/chat',
-      apiStatus: 'checking'
-    };
+     // State management
+  const chatState = {
+    isDarkMode: true,
+    // Perbaiki endpoint untuk Vercel
+    apiEndpoint: '/api/chat',
+    healthEndpoint: '/api/health'
+  };
+
 
     // DOM Elements
     const form = document.getElementById('chat-form');
@@ -287,10 +289,10 @@
     themeToggle.addEventListener('click', toggleTheme);
     suggestBtn.addEventListener('click', showSuggestions);
 
-    // Fungsi untuk mengecek status API
+    // Di fungsi checkAPIStatus
     async function checkAPIStatus() {
       try {
-        const response = await fetch('/api/health');
+        const response = await fetch(chatState.healthEndpoint);
         if (response.ok) {
           updateApiStatus('connected', 'API: Connected');
         } else {
@@ -300,7 +302,6 @@
         updateApiStatus('error', 'API: Offline');
       }
     }
-
     function updateApiStatus(status, text) {
       apiStatus.className = `status-badge flex items-center gap-1 ${
         status === 'connected' ? 'bg-green-500' : 

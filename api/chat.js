@@ -1,14 +1,26 @@
-// api/chat.js
 const express = require('express');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const router = express.Router();
+const dotenv = require('dotenv');
+const cors = require('cors');
 
-router.post('/', async (req, res) => {
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Gemini API endpoint
+app.post('/api/chat', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   const { user_input } = req.body;
 
   if (!apiKey) {
-    return res.status(500).send('API key tidak ditemukan. Harap konfigurasi .env');
+    return res.status(500).send('API key tidak ditemukan');
   }
 
   const payload = {
@@ -27,16 +39,16 @@ router.post('/', async (req, res) => {
     
     if (!geminiResponse.ok) {
       const errorData = await geminiResponse.json();
-      throw new Error(`Gemini API error: ${errorData.error?.message || geminiResponse.statusText}`);
+      return res.status(geminiResponse.status).send(`Gemini API error: ${errorData.error?.message || geminiResponse.statusText}`);
     }
     
     const data = await geminiResponse.json();
     const result = data?.candidates?.[0]?.content?.parts?.[0]?.text || '⚠️ Tidak ada respon dari AI.';
     res.status(200).send(result);
   } catch (err) {
-    console.error('Error:', err.message);
+    console.error('Error:', err);
     res.status(500).send(`Terjadi kesalahan server: ${err.message}`);
   }
 });
 
-module.exports = router;
+module.exports = app;
